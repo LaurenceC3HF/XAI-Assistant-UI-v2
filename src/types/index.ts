@@ -21,6 +21,7 @@ export interface ScenarioPhase {
 export interface ChatMessage {
   timestamp: string;
   type: 'user_query' | 'ai_response';
+  tabType?: 'insight' | 'reasoning' | 'projection'; // NEW FIELD
   details: {
     query?: string;
     question?: string;
