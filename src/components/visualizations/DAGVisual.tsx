@@ -7,9 +7,21 @@ interface DAGVisualProps {
   dagData?: DAGData;
 }
 
+const FONT = "500 14px Inter, sans-serif"; // match your node text styling
+
+function measureTextWidth(text: string, font = FONT) {
+  // Use a single canvas for better performance
+  const canvas = measureTextWidth.canvas || (measureTextWidth.canvas = document.createElement("canvas"));
+  const context = canvas.getContext("2d");
+  if (!context) return 100;
+  context.font = font;
+  return context.measureText(text).width;
+}
+measureTextWidth.canvas = undefined as undefined | HTMLCanvasElement;
+
 export const DAGVisual: React.FC<DAGVisualProps> = ({ dagData }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [containerWidth, setContainerWidth] = useState(700); // default fallback width
+  const [containerWidth, setContainerWidth] = useState(700); // fallback width
 
   useEffect(() => {
     if (containerRef.current) {
@@ -23,31 +35,38 @@ export const DAGVisual: React.FC<DAGVisualProps> = ({ dagData }) => {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
-
+  
   if (!dagData || !dagData.nodes || !dagData.edges) return null;
 
-  // Dynamically calculate node positions based on container width
-  const nodeCount = dagData.nodes.length;
-  const nodeWidth = 170;
+  // Calculate dynamic node widths
+  const horizontalPadding = 32; // px left+right
+  const minNodeWidth = 100;
+  const maxNodeWidth = 220;
   const nodeHeight = 60;
   const vCenter = 130;
-  const vStagger = 30;
+  const vStagger = 24;
 
-  // Compute horizontal gap so nodes fit in the container, minimum gap enforced
-  const minGap = 32;
-  const availableWidth = Math.max(containerWidth - nodeWidth, nodeWidth + minGap * (nodeCount - 1));
-  const gap = nodeCount > 1 ? Math.max(minGap, (availableWidth - nodeWidth) / (nodeCount - 1)) : 0;
-
-  const nodePositions: Record<string, { x: number; y: number }> = {};
-  dagData.nodes.forEach((node, i) => {
-    nodePositions[node.id] = {
-      x: nodeWidth / 2 + i * gap,
-      y: vCenter + (i % 2 === 0 ? -vStagger : vStagger)
-    };
+  // For each node, measure label width and add padding
+  const nodeDims = dagData.nodes.map(node => {
+    const labelWidth = measureTextWidth(node.label);
+    const width = Math.min(maxNodeWidth, Math.max(minNodeWidth, labelWidth + horizontalPadding));
+    return { id: node.id, width, label: node.label };
   });
 
-  // Only allow scrolling if nodes overflow container
-  const totalWidth = nodeCount > 1 ? nodeWidth + (nodeCount - 1) * gap : nodeWidth;
+  // Positions: lay out horizontally, spacing by sum of previous widths plus gap
+  const minGap = 36;
+  let positions: Record<string, { x: number; y: number; width: number }> = {};
+  let x = 36; // start with a left margin
+  nodeDims.forEach((node, i) => {
+    positions[node.id] = {
+      x: x + node.width / 2,
+      y: vCenter + (i % 2 === 0 ? -vStagger : vStagger),
+      width: node.width
+    };
+    x += node.width + minGap;
+  });
+
+  const totalWidth = x; // last x includes the right margin
   const needsScroll = totalWidth > containerWidth;
   const scrollStyle = needsScroll
     ? { overflowX: 'auto', overflowY: 'hidden' as const }
@@ -97,15 +116,15 @@ export const DAGVisual: React.FC<DAGVisualProps> = ({ dagData }) => {
               </marker>
             </defs>
             {dagData.edges.map((edge, i) => {
-              const from = nodePositions[edge.from];
-              const to = nodePositions[edge.to];
+              const from = positions[edge.from];
+              const to = positions[edge.to];
               if (!from || !to) return null;
               return (
                 <line
                   key={i}
-                  x1={from.x + nodeWidth / 2}
+                  x1={from.x + from.width / 2}
                   y1={from.y}
-                  x2={to.x - nodeWidth / 2}
+                  x2={to.x - to.width / 2}
                   y2={to.y}
                   stroke="#64748b"
                   strokeWidth="2"
@@ -117,15 +136,15 @@ export const DAGVisual: React.FC<DAGVisualProps> = ({ dagData }) => {
           </svg>
           {/* Nodes */}
           {dagData.nodes.map((node, i) => {
-            const pos = nodePositions[node.id];
+            const pos = positions[node.id];
             return (
               <div
                 key={node.id}
                 className="absolute z-10 group"
                 style={{
-                  left: pos.x - nodeWidth / 2,
+                  left: pos.x - pos.width / 2,
                   top: pos.y - nodeHeight / 2,
-                  width: nodeWidth,
+                  width: pos.width,
                   height: nodeHeight
                 }}
               >
