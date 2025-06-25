@@ -15,7 +15,7 @@ export const ProjectionTab: React.FC<ProjectionTabProps> = ({ explanation }) => 
         <div className="flex items-center mb-4">
           <Activity className="w-6 h-6 text-purple-400 mr-3" />
           <h3 className="text-lg font-semibold text-purple-300">
-            Situational Awareness Level 3: Projection
+            Summary
           </h3>
         </div>
         <p className="text-gray-300 leading-relaxed whitespace-pre-wrap">
