@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { ChatMessage, XAIExplanation } from '../types';
-import { Send, MessageSquare, AlertCircle, User, Bot, Clock } from 'lucide-react';
+import { Send, MessageSquare, AlertCircle, User, Bot, Clock, Info } from 'lucide-react';
 
-// Add mapping for tab display
-const TAB_DISPLAY = {
-  insight: { label: "Insight", color: "bg-blue-700 text-blue-100" },
-  reasoning: { label: "Reasoning", color: "bg-yellow-300 text-yellow-900" },
-  projection: { label: "Projection", color: "bg-purple-700 text-purple-100" }
+// Tab indicator mapping (colors match previous chip scheme)
+const TAB_DOT = {
+  insight: { color: "bg-blue-500", label: "Insight" },
+  reasoning: { color: "bg-yellow-400", label: "Reasoning" },
+  projection: { color: "bg-purple-500", label: "Projection" }
 };
 
 interface ChatPanelProps {
@@ -97,10 +97,10 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
             : item.details.response?.response;
 
           // Get defaultTab for AI responses
-          let defaultTab, tabInfo;
+          let defaultTab, dotInfo;
           if (!isUser && item.details.response) {
             defaultTab = item.details.response.defaultTab || "insight";
-            tabInfo = TAB_DISPLAY[defaultTab];
+            dotInfo = TAB_DOT[defaultTab];
           }
           
           return (
@@ -120,13 +120,18 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                     : 'bg-slate-700/80 hover:bg-slate-700 text-gray-100 mr-4'
                   }
                 `}>
-                  {/* Tab indicator for AI responses */}
-                  {!isUser && tabInfo && (
+                  {/* Small tab dot indicator for AI responses */}
+                  {!isUser && dotInfo && (
                     <span
-                      className={`absolute top-2 right-2 px-2 py-0.5 rounded-full text-xs font-bold shadow ${tabInfo.color}`}
-                      title={`Default explanation tab: ${tabInfo.label}`}
+                      className={`absolute top-2 right-2 flex items-center group`}
                     >
-                      {tabInfo.label}
+                      <span 
+                        className={`w-2 h-2 rounded-full ${dotInfo.color} border border-white/60 shadow`}
+                        title={dotInfo.label}
+                      />
+                      <span className="absolute top-4 right-0 opacity-0 group-hover:opacity-100 bg-slate-900 text-xs text-white rounded px-2 py-1 pointer-events-none z-10 transition-opacity duration-150 shadow-lg whitespace-nowrap">
+                        {dotInfo.label}
+                      </span>
                     </span>
                   )}
                   <div className="flex items-start space-x-2">
