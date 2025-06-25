@@ -31,8 +31,6 @@ export const COAComparison: React.FC<COAComparisonProps> = ({ coas }) => {
             key={coa.id}
             className={`
               relative bg-slate-900/60 border-2 rounded-lg p-4
-              transition-all duration-300 ease-in-out
-              hover:transform hover:scale-105 hover:shadow-lg
               ${getBorderColor(coa.id, coa.recommendationScore)}
             `}
           >
