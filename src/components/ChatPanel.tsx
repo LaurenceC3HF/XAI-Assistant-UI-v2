@@ -2,6 +2,13 @@ import React, { useState } from 'react';
 import { ChatMessage, XAIExplanation } from '../types';
 import { Send, MessageSquare, AlertCircle, User, Bot, Clock } from 'lucide-react';
 
+// Add mapping for tab display
+const TAB_DISPLAY = {
+  insight: { label: "Insight", color: "bg-blue-700 text-blue-100" },
+  reasoning: { label: "Reasoning", color: "bg-yellow-300 text-yellow-900" },
+  projection: { label: "Projection", color: "bg-purple-700 text-purple-100" }
+};
+
 interface ChatPanelProps {
   chatHistory: ChatMessage[];
   isLoading: boolean;
@@ -88,6 +95,13 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
           const content = isUser 
             ? item.details.query 
             : item.details.response?.response;
+
+          // Get defaultTab for AI responses
+          let defaultTab, tabInfo;
+          if (!isUser && item.details.response) {
+            defaultTab = item.details.response.defaultTab || "insight";
+            tabInfo = TAB_DISPLAY[defaultTab];
+          }
           
           return (
             <div key={index} className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
@@ -96,6 +110,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                 className={`
                   max-w-[85%] group transition-all duration-200
                   ${!isUser ? 'cursor-pointer hover:scale-105' : ''}
+                  relative
                 `}
               >
                 <div className={`
@@ -105,6 +120,15 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
                     : 'bg-slate-700/80 hover:bg-slate-700 text-gray-100 mr-4'
                   }
                 `}>
+                  {/* Tab indicator for AI responses */}
+                  {!isUser && tabInfo && (
+                    <span
+                      className={`absolute top-2 right-2 px-2 py-0.5 rounded-full text-xs font-bold shadow ${tabInfo.color}`}
+                      title={`Default explanation tab: ${tabInfo.label}`}
+                    >
+                      {tabInfo.label}
+                    </span>
+                  )}
                   <div className="flex items-start space-x-2">
                     <div className="flex-shrink-0 mt-1">
                       {isUser ? (
