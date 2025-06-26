@@ -1,16 +1,29 @@
 import React from 'react';
 import { TabType } from '../types';
 import { TABS, ANIMATION_DURATION } from '../utils/constants';
+import { useInteractionLog } from '../hooks/useInteractionLog';
 
 interface HeaderProps {
   activeTab: TabType;
   onTabChange: (tab: TabType) => void;
+  onToggleExperimenter?: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ activeTab, onTabChange }) => {
+export const Header: React.FC<HeaderProps> = ({ activeTab, onTabChange, onToggleExperimenter }) => {
+  const { logInteraction, exportLog } = useInteractionLog();
+
+  const handleTab = (tabId: string) => {
+    logInteraction({
+      eventType: 'tab_change',
+      timestamp: new Date().toISOString(),
+      metadata: { tab: tabId }
+    });
+    onTabChange(tabId as TabType);
+  };
+
   return (
     <header className="flex-shrink-0 bg-slate-800/90 backdrop-blur-sm shadow-lg border-b border-slate-700/50">
-      <div className="flex justify-center items-center px-6 py-4">
+      <div className="flex justify-between items-center px-6 py-4">
         <nav className="flex space-x-1 bg-slate-900/50 rounded-lg p-1" role="tablist">
           {TABS.map(tab => (
             <button
@@ -18,7 +31,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, onTabChange }) => {
               role="tab"
               aria-selected={activeTab === tab.id}
               aria-controls={`${tab.id}-panel`}
-              onClick={() => onTabChange(tab.id as TabType)}
+              onClick={() => handleTab(tab.id)}
               className={`
                 relative px-6 py-3 font-semibold text-sm tracking-wide rounded-md
                 transition-all duration-${ANIMATION_DURATION} ease-in-out
@@ -36,6 +49,22 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, onTabChange }) => {
             </button>
           ))}
         </nav>
+        <div className="flex space-x-2">
+          <button
+            onClick={exportLog}
+            className="px-3 py-2 text-xs bg-slate-700/50 hover:bg-slate-600/50 rounded text-gray-300 hover:text-white"
+          >
+            Export Log
+          </button>
+          {onToggleExperimenter && (
+            <button
+              onClick={onToggleExperimenter}
+              className="px-3 py-2 text-xs bg-slate-700/50 hover:bg-slate-600/50 rounded text-gray-300 hover:text-white"
+            >
+              Experimenter
+            </button>
+          )}
+        </div>
       </div>
     </header>
   );

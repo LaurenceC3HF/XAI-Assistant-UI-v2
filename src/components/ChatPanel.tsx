@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ChatMessage, XAIExplanation } from '../types';
+import { useInteractionLog } from '../hooks/useInteractionLog';
 import { Send, MessageSquare, AlertCircle, User, Bot, Clock, Info } from 'lucide-react';
 
 // Tab indicator mapping (colors match previous chip scheme)
@@ -31,13 +32,14 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
   chatContainerRef
 }) => {
   const [userInput, setUserInput] = useState('');
+  const { logInteraction } = useInteractionLog();
 
   const handleSend = async () => {
     if (!userInput.trim() || isLoading) return;
     
     const response = await onSendMessage(userInput);
     setUserInput('');
-    
+
     if (response && onHistoryClick) {
       // Simulate clicking on the latest AI response
       const latestMessage = {
@@ -45,6 +47,11 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
         type: 'ai_response' as const,
         details: { response }
       };
+      logInteraction({
+        eventType: 'history_click',
+        timestamp: latestMessage.timestamp,
+        metadata: { source: 'auto-select' }
+      });
       onHistoryClick(latestMessage);
     }
   };
@@ -105,8 +112,17 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
           
           return (
             <div key={index} className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
-              <div 
-                onClick={() => !isUser && onHistoryClick(item)}
+              <div
+                onClick={() => {
+                  if (!isUser) {
+                    logInteraction({
+                      eventType: 'history_click',
+                      timestamp: new Date().toISOString(),
+                      metadata: { index }
+                    });
+                    onHistoryClick(item);
+                  }
+                }}
                 className={`
                   max-w-[85%] group transition-all duration-200
                   ${!isUser ? 'cursor-pointer hover:scale-105' : ''}
