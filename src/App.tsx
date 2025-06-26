@@ -1,13 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Header } from './components/Header';
 import { MainContent } from './components/MainContent';
 import { ChatPanel } from './components/ChatPanel';
+import { ExperimenterPanel } from './components/ExperimenterPanel';
 import { useXAI } from './hooks/useXAI';
 import { useChat } from './hooks/useChat';
 import { defaultScenario } from './data/scenarios';
 import { ChatMessage } from './types';
 
 function App() {
+  const [showExperimenter, setShowExperimenter] = useState(false);
   const {
     currentExplanation,
     activeTab,
@@ -37,7 +39,11 @@ function App() {
     <div className="flex h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-gray-300 font-inter overflow-hidden">
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0">
-        <Header activeTab={activeTab} onTabChange={setActiveTab} />
+        <Header
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          onToggleExperimenter={() => setShowExperimenter(v => !v)}
+        />
         <MainContent 
           explanation={currentExplanation}
           activeTab={activeTab}
@@ -56,6 +62,10 @@ function App() {
         onClearError={clearError}
         chatContainerRef={chatContainerRef}
       />
+
+      {showExperimenter && (
+        <ExperimenterPanel onClose={() => setShowExperimenter(false)} />
+      )}
 
       {/* Global Styles */}
       <style dangerouslySetInnerHTML={{

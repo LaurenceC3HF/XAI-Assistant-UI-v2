@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { ChatMessage, XAIExplanation } from '../types';
+import { useInteractionLog } from './useInteractionLog';
 import { generateScriptedResponse } from '../utils/scriptedResponses';
 
 export const useChat = (initialScenario: any) => {
@@ -7,15 +8,24 @@ export const useChat = (initialScenario: any) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const { logInteraction } = useInteractionLog();
 
-  const logEvent = useCallback((type: ChatMessage['type'], details: ChatMessage['details']) => {
-    const newMessage: ChatMessage = {
-      timestamp: new Date().toISOString(),
-      type,
-      details
-    };
-    setChatHistory(prev => [...prev, newMessage]);
-  }, []);
+  const logEvent = useCallback(
+    (type: ChatMessage['type'], details: ChatMessage['details']) => {
+      const newMessage: ChatMessage = {
+        timestamp: new Date().toISOString(),
+        type,
+        details
+      };
+      setChatHistory(prev => [...prev, newMessage]);
+      logInteraction({
+        eventType: type,
+        timestamp: newMessage.timestamp,
+        metadata: details
+      });
+    },
+    [logInteraction]
+  );
 
   const sendMessage = useCallback(async (message: string): Promise<XAIExplanation | null> => {
     if (!message.trim() || isLoading) return null;

@@ -60,3 +60,9 @@ export interface AlternativeOutcome {
 }
 
 export type TabType = 'insight' | 'reasoning' | 'projection';
+
+export interface InteractionEvent {
+  eventType: string;
+  timestamp: string;
+  metadata?: Record<string, unknown>;
+}
